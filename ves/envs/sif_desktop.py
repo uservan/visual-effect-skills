@@ -34,8 +34,15 @@ PROJECT = Path(__file__).resolve().parents[2]
 # exported again at the start of every shell command
 EXEC_ENV = ("DISPLAY=:1", "USER=ga", "LOGNAME=ga", "XDG_RUNTIME_DIR=/tmp/runtime-ga")
 SHELL_PREFIX = "export HOME=/home/ga USER=ga LOGNAME=ga DISPLAY=:1 XDG_RUNTIME_DIR=/tmp/runtime-ga; cd /home/ga 2>/dev/null; "
-FLUXBOX_INIT = "session.screen0.toolbar.visible: false\nsession.screen0.workspaces: 1\n"
-FLUXBOX_APPS = "[app] (role=gimp-image-window)\n  [Maximized] {yes}\n[end]\n"
+FLUXBOX_INIT = ("session.screen0.toolbar.visible: false\nsession.screen0.workspaces: 1\n"
+                "session.styleOverlay: ~/.fluxbox/overlay\n")
+# no wallpaper: fluxbox's fbsetbg call failed and left an xmessage error window on screen (job 2727432); the root is
+# then painted one plain colour (Xvfb's default root weave looks like GIMP's transparency checkerboard)
+FLUXBOX_OVERLAY = "background: none\n"
+# GIMP's main window (title "... – GIMP", or "GNU Image Manipulation Program" without an image) opens maximized
+FLUXBOX_APPS = ("[app] (title=.*GIMP$)\n  [Maximized] {yes}\n[end]\n"
+                "[app] (title=GNU Image Manipulation Program)\n  [Maximized] {yes}\n[end]\n")
+ROOT_COLOUR = "#3c3c3c"
 
 
 def _key_map() -> dict:
@@ -148,7 +155,9 @@ class SifDesktop(DesktopEnv):
 
     def _start_display(self) -> None:
         w, h = self.native_size
-        self.sh("mkdir -p /tmp/runtime-ga && chmod 700 /tmp/runtime-ga; "
+        # python-xlib (used by pyautogui) refuses to connect without ~/.Xauthority, even to a server started with -ac;
+        # gym-anything's QEMU runner touches the same file (2026-10-20, job 2727432: every action failed without it)
+        self.sh("touch /home/ga/.Xauthority; mkdir -p /tmp/runtime-ga && chmod 700 /tmp/runtime-ga; "
                 f"nohup Xvfb :1 -screen 0 {w}x{h}x24 -ac -nolisten tcp -nolisten local > /tmp/xvfb.log 2>&1 &", 30)
         for _ in range(30):
             if self.sh("xdpyinfo -display :1 >/dev/null 2>&1", 15).returncode == 0:
@@ -159,6 +168,7 @@ class SifDesktop(DesktopEnv):
         self.sh("nohup fluxbox > /tmp/fluxbox.log 2>&1 &", 30)
         for _ in range(30):
             if "fluxbox" in self.sh("wmctrl -m 2>/dev/null", 15).stdout.lower():
+                self.sh(f"xsetroot -solid '{ROOT_COLOUR}'; pkill -x xmessage; true", 30)
                 return
             time.sleep(1)
         raise EnvError("fluxbox did not start: " + self.sh("tail -5 /tmp/fluxbox.log", 15).stdout)
@@ -167,7 +177,7 @@ class SifDesktop(DesktopEnv):
     def _template(self) -> Path:
         key = hashlib.sha256("|".join([
             _file_digest(self.image), (self.env_dir / "env.json").read_text(), _tree_digest(self.env_dir / "scripts"),
-            _tree_digest(self.env_dir / "config"), FLUXBOX_INIT, FLUXBOX_APPS]).encode()).hexdigest()[:16]
+            _tree_digest(self.env_dir / "config"), FLUXBOX_INIT, FLUXBOX_OVERLAY, FLUXBOX_APPS]).encode()).hexdigest()[:16]
         root = Path(self.spec.get("template_root") or PROJECT / "vm" / "homes")
         root.mkdir(parents=True, exist_ok=True)
         done = root / key
@@ -182,6 +192,7 @@ class SifDesktop(DesktopEnv):
             (build / "home" / "ga" / ".fluxbox").mkdir(parents=True)
             (build / "tmp").mkdir()
             (build / "home" / "ga" / ".fluxbox" / "init").write_text(FLUXBOX_INIT)
+            (build / "home" / "ga" / ".fluxbox" / "overlay").write_text(FLUXBOX_OVERLAY)
             (build / "home" / "ga" / ".fluxbox" / "apps").write_text(FLUXBOX_APPS)
             name = f"ves_tpl_{uuid.uuid4().hex[:8]}"
             self._start_instance(name, build / "home", build / "tmp", [])
