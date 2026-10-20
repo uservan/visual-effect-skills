@@ -1,0 +1,11 @@
+Shims for running unmodified CUA-World task scripts as an unprivileged user (rootless Singularity container).
+They are first on PATH inside the image.  Every call is logged to /tmp/ves-shim.log.
+
+  sudo       drops its options and runs the command as the current user
+  su         `su - ga -c CMD` runs CMD in a login shell (as the current user, cwd $HOME = /home/ga)
+  apt-get    packages are installed in the image; checks that the requested ones are present, always succeeds
+  apt        same as apt-get
+  chown      runs the real chown, ignores failures (other users' ids are not mapped)
+  chgrp      same
+  pip, pip3  ignored (the Python packages the tasks need are installed in the image)
+  systemctl, service   ignored

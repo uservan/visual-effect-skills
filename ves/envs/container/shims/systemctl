@@ -1,0 +1,4 @@
+#!/bin/bash
+# ves shim (see README): ignored in the rootless container.
+echo "systemctl $*" >> /tmp/ves-shim.log 2>/dev/null
+exit 0

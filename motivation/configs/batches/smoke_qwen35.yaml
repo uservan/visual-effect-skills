@@ -1,0 +1,32 @@
+# Harness acceptance test for the replication model: one task, C2 and C3, Qwen3.5-397B-A17B (FP8), one seed.
+name: smoke_qwen35
+runs_root: motivation/runs
+serve: {profile: qwen35, gpus: "0,1,2,3,4,5,6,7"}
+model:
+  name: qwen3.5-397b-a17b-fp8
+  served_name: qwen35
+  base_urls: []  # filled from VES_BASE_URLS by abci/run_batch.pbs
+  checkpoint: {repo: Qwen/Qwen3.5-397B-A17B-FP8, revision: ea5b4f81096f3901c91dea97f81324302495781d,
+               path: models/Qwen3.5-397B-A17B-FP8, dtype: fp8, server: vllm 0.31.0}
+  coord: norm1000
+  model_screen: [1280, 720]
+  sampling: {temperature: 0.0, top_p: 1.0, max_tokens: 2048}
+  extra_body: {chat_template_kwargs: {enable_thinking: false}}
+conditions: [C2, C3]
+seeds: [0]
+app: motivation/configs/apps/gimp.yaml
+tasks:
+  benchmark: cua_world
+  env_dir: third_party/gym-anything/benchmarks/cua_world/environments/gimp_env_all
+  ids: [brightness_contrast]
+env:  # rootless Singularity desktop (ves/envs/sif_desktop.py); ABCI jobs cannot use KVM
+  backend: sif
+  image: vm/gimp.sif
+  ga_root: third_party/gym-anything
+  settle_s: 4.0
+  copy_out: [/home/ga/Desktop, /home/ga/Documents]
+budget: {max_steps_cap: 120, max_turns_factor: 3, timeout_s: 3600, max_consecutive_errors: 5}
+agent: {keep_screenshots: 6}
+parallel: 2
+max_attempts: 2
+stagger_s: 10

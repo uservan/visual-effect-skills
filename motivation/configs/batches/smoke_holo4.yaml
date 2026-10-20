@@ -1,0 +1,32 @@
+# Harness acceptance test (protocol "Acceptance criteria"): one task, C2 and C3, Holo4, one seed.
+name: smoke_holo4
+runs_root: motivation/runs
+serve: {profile: holo4, gpus: "0,1"}
+model:
+  name: holo4-35b-a3b
+  served_name: holo4
+  base_urls: []  # filled from VES_BASE_URLS by abci/run_batch.pbs
+  checkpoint: {repo: Hcompany/Holo4-35B-A3B, revision: 508458727831368da85d53a8055c2b0f923ed4f3,
+               path: models/Holo4-35B-A3B, dtype: bfloat16, server: vllm 0.31.0}
+  coord: norm1000
+  model_screen: [1280, 720]
+  sampling: {temperature: 0.0, top_p: 1.0, max_tokens: 2048}
+  extra_body: {chat_template_kwargs: {enable_thinking: false}}
+conditions: [C2, C3]
+seeds: [0]
+app: motivation/configs/apps/gimp.yaml
+tasks:
+  benchmark: cua_world
+  env_dir: third_party/gym-anything/benchmarks/cua_world/environments/gimp_env_all
+  ids: [brightness_contrast]
+env:  # rootless Singularity desktop (ves/envs/sif_desktop.py); ABCI jobs cannot use KVM
+  backend: sif
+  image: vm/gimp.sif
+  ga_root: third_party/gym-anything
+  settle_s: 4.0
+  copy_out: [/home/ga/Desktop, /home/ga/Documents]
+budget: {max_steps_cap: 120, max_turns_factor: 3, timeout_s: 3600, max_consecutive_errors: 5}
+agent: {keep_screenshots: 6}
+parallel: 2
+max_attempts: 2
+stagger_s: 10

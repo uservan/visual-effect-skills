@@ -1,0 +1,16 @@
+#!/bin/bash
+# ves shim (see README): `su - ga -c CMD` / `su ga -c CMD` -> run CMD in a login shell as this user.
+echo "su $*" >> /tmp/ves-shim.log 2>/dev/null
+cmd="" login=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    - | -l | --login) login=1; shift ;;
+    -c | --command) cmd=$2; shift 2 ;;
+    --command=*) cmd=${1#*=}; shift ;;
+    -s | --shell | -g | --group) shift 2 ;;
+    *) shift ;;  # the user name and other options
+  esac
+done
+[ "$login" = 1 ] && cd "$HOME" 2>/dev/null
+[ -n "$cmd" ] && exec bash -lc "$cmd"
+exec bash -l

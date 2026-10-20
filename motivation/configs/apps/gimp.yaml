@@ -1,0 +1,7 @@
+# Knowledge material for GIMP 2.10 (paths relative to the repository root).
+# C1 uses text_skill; C2-C4 use multimodal_skill; C3 adds effect_oracle; C4 adds grounding_oracle.
+# The VisualSkills checkout is third_party/VisualSkills at commit 582e6ccb370b291bd31f3688629378e385e3731a.
+text_skill: third_party/VisualSkills/skills/gimp-text-stage2
+multimodal_skill: third_party/VisualSkills/skills/gimp-multimodal-stage2
+effect_oracle: motivation/oracles/effect/gimp.md
+grounding_oracle: motivation/oracles/grounding/gimp.md

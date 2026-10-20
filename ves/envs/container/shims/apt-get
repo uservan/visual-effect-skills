@@ -1,0 +1,19 @@
+#!/bin/bash
+# ves shim (see README): the packages are installed in the image.  Report requested packages that are missing, succeed.
+echo "apt-get $*" >> /tmp/ves-shim.log 2>/dev/null
+sub="" pkgs=() skip=0
+for a in "$@"; do
+  if [ "$skip" = 1 ]; then skip=0; continue; fi
+  case "$a" in
+    -o | -c | -t) skip=1 ;;
+    -* | *::*) ;;
+    update | upgrade | install | remove | purge | clean | autoremove | dist-upgrade | download | source) [ -z "$sub" ] && sub=$a ;;
+    *) [ "$sub" = install ] && pkgs+=("${a%%=*}") ;;
+  esac
+done
+missing=()
+for p in "${pkgs[@]}"; do dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p"); done
+if [ ${#missing[@]} -gt 0 ]; then
+  echo "ves-shim apt-get: not in the image, ignored: ${missing[*]}" | tee -a /tmp/ves-shim.log >&2
+fi
+exit 0

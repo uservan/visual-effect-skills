@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VES Trajectory Viewer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>VES trajectory viewer</h1>
+  <span id="counts"></span>
+</header>
+<section id="filters" class="bar"></section>
+<details id="matrix-box" open><summary>Task &times; condition outcomes (latest completed attempt)</summary><div id="matrix"></div></details>
+<details id="table-box" open><summary>Runs</summary><div id="table"></div></details>
+<section id="compare-bar" class="bar">
+  <label><input type="checkbox" id="sync"> sync step position</label>
+  <button id="export">Export task report (task of pane A)</button>
+  <span class="hint">Click a run's A / B button to open it; arrow keys move pane A.</span>
+</section>
+<main id="panes"><div class="pane" id="pane0"></div><div class="pane" id="pane1"></div></main>
+<script src="data/index.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

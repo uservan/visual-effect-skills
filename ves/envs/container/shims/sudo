@@ -1,0 +1,13 @@
+#!/bin/bash
+# ves shim (see README): no root in the rootless container; drop sudo's options and run the command as this user.
+echo "sudo $*" >> /tmp/ves-shim.log 2>/dev/null
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -u | -g | -C | -D | -h | -p | -r | -t | -U | -T) shift 2 ;;
+    --) shift; break ;;
+    -*) shift ;;
+    *) break ;;
+  esac
+done
+[ $# -eq 0 ] && exit 0
+exec "$@"

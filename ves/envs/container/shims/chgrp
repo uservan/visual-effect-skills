@@ -1,0 +1,4 @@
+#!/bin/bash
+# ves shim (see README): other users' ids are not mapped in the rootless container; try, never fail.
+/usr/bin/chgrp "$@" 2>/dev/null
+exit 0

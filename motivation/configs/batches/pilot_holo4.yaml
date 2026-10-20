@@ -1,0 +1,39 @@
+# Viability pilot (protocol, Experiment B: "Run a 10-20 task viability pilot on Holo4 ... C0/C2/C3 first").
+# PROVISIONAL task choice, made before any agent outcome was seen and before the Experiment A audit: CUA-World
+# gimp_env_all tasks whose instruction states a target visual outcome (exposure, tone, colour, transparency,
+# straightening, retouching) instead of naming the exact filter or parameter values.  The audit's task manifest
+# replaces this list for the formal runs.  C3 uses the DRAFT effect notes (motivation/oracles/effect/gimp.md, v0).
+name: pilot_holo4
+runs_root: motivation/runs
+serve: {profile: holo4, gpus: "0,1,2,3,4,5,6,7"}
+model:
+  name: holo4-35b-a3b
+  served_name: holo4
+  base_urls: []  # filled from VES_BASE_URLS by abci/run_batch.pbs
+  checkpoint: {repo: Hcompany/Holo4-35B-A3B, revision: 508458727831368da85d53a8055c2b0f923ed4f3,
+               path: models/Holo4-35B-A3B, dtype: bfloat16, server: vllm 0.31.0}
+  coord: norm1000
+  model_screen: [1280, 720]
+  sampling: {temperature: 0.0, top_p: 1.0, max_tokens: 2048}
+  extra_body: {chat_template_kwargs: {enable_thinking: false}}
+conditions: [C0, C2, C3]
+seeds: [0]
+app: motivation/configs/apps/gimp.yaml
+tasks:
+  benchmark: cua_world
+  env_dir: third_party/gym-anything/benchmarks/cua_world/environments/gimp_env_all
+  ids: [brightness_adjust, brightness_contrast, levels_adjust, shadows_highlights, auto_stretch_contrast,
+        contrast_adjust, color_balance, color_enhance, color_temperature, saturation_enhance, sepia_tone,
+        threshold_convert, remove_background, color_to_alpha, eraser_transparency, fuzzy_select_fill,
+        image_rotation, graphic_designer_photo_retouch]
+env:  # rootless Singularity desktop (ves/envs/sif_desktop.py); ABCI jobs cannot use KVM
+  backend: sif
+  image: vm/gimp.sif
+  ga_root: third_party/gym-anything
+  settle_s: 4.0
+  copy_out: [/home/ga/Desktop, /home/ga/Documents]
+budget: {max_steps_cap: 120, max_turns_factor: 3, timeout_s: 5400, max_consecutive_errors: 5}
+agent: {keep_screenshots: 6}
+parallel: 8
+max_attempts: 3
+stagger_s: 15

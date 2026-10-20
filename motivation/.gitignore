@@ -1,0 +1,4 @@
+# raw runs (screenshots, traces) and generated output stay out of git; see README.md
+runs/
+viewer/
+ctl/

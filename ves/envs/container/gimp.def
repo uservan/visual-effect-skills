@@ -1,0 +1,50 @@
+Bootstrap: docker
+From: ubuntu:24.04
+
+# Rootless desktop for CUA-World GIMP tasks (ves.envs.sif_desktop).  Same Ubuntu release and GIMP package as
+# gym-anything's Docker image ubuntu-gnome-systemd_highres + scripts/install_gimp.sh (GIMP 2.10.x from Ubuntu 24.04),
+# but no GNOME/systemd: Xvfb on display :1 with the fluxbox window manager, because ABCI jobs have neither root,
+# Docker nor KVM.  Everything the task scripts apt-get install at run time is installed here; the shims in
+# /opt/ves-shims (first on PATH) make their sudo / su / apt-get / chown calls work for an unprivileged user.
+# Build (compute node):  singularity build --fakeroot vm/gimp.sif ves/envs/container/gimp.def   (cwd = repo root)
+
+%files
+    ves/envs/container/shims /opt/ves-shims
+
+%post
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99ves-sandbox
+    apt-get update
+    # GIMP and the extras of install_gimp.sh (its build-essential / libgimp2.0-dev part is left out: no task builds plugins)
+    apt-get install -y --no-install-recommends \
+        gimp gimp-data-extras gimp-plugin-registry gimp-gmic gimp-help-en gimp-help-common \
+        inkscape imagemagick graphicsmagick exiftool dcraw \
+        fonts-liberation fonts-dejavu-extra fonts-noto fonts-hack fonts-firacode
+    # display stack and the tools the task scripts call
+    apt-get install -y --no-install-recommends \
+        xvfb x11-utils x11-xserver-utils xauth xdotool wmctrl fluxbox dbus-x11 at-spi2-core \
+        python3 python3-pip python3-pil python3-numpy python3-scipy python3-opencv python3-sklearn \
+        python3-tk python3-xlib wget curl ca-certificates file locales tzdata procps psmisc less
+    pip3 install --break-system-packages --no-cache-dir pyautogui==0.9.54
+    locale-gen en_US.UTF-8 || true
+    (userdel -r ubuntu 2>/dev/null || true)
+    useradd -m -u 1000 -U -s /bin/bash ga || true
+    useradd -m -u 1001 -U -s /bin/bash artist || true
+    mkdir -p /workspace
+    fc-cache -f
+    gimp --version > /opt/ves-gimp-version.txt
+    rm -rf /var/lib/apt/lists/*
+    # last step: the shims also go to /usr/local/bin, which precedes /usr/bin on every standard PATH, so that login
+    # shells that reset PATH still get them (no apt-get may run in this section after this point)
+    chmod 755 /opt/ves-shims/*
+    chmod 644 /opt/ves-shims/README
+    for f in /opt/ves-shims/*; do [ "$(basename "$f")" = README ] || cp "$f" /usr/local/bin/; done
+
+%environment
+    export LANG=C.UTF-8 LC_ALL=C.UTF-8
+    export DISPLAY=:1
+    export PATH=/opt/ves-shims:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+%labels
+    Purpose vanves motivation study, rootless GIMP desktop
