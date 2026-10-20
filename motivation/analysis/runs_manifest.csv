@@ -1,1 +1,3 @@
 model,condition,task_id,run_id,status,stop_reason,success,score,actions,max_steps,model_turns,skill_calls,invalid_actions,prompt_tokens,runtime_s,finished_at,host,pbs_job,abci_path
+"holo4-35b-a3b","C2","cuaworld.gimp_env_all.brightness_contrast","s0_a1","completed","max_steps","true","0.75","10","10","11","1","0","135085","98.5","2026-10-20T20:04:58+0900","hnode553","2727432.pbs1","motivation/runs/holo4-35b-a3b/C2/cuaworld.gimp_env_all.brightness_contrast/s0_a1"
+"holo4-35b-a3b","C3","cuaworld.gimp_env_all.brightness_contrast","s0_a1","completed","max_steps","false","0.5","10","10","11","1","0","154170","97.0","2026-10-20T20:05:06+0900","hnode553","2727432.pbs1","motivation/runs/holo4-35b-a3b/C3/cuaworld.gimp_env_all.brightness_contrast/s0_a1"
