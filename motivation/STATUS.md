@@ -1,13 +1,14 @@
 # ABCI status (ChuangMa side)
 
-Updated 2026-10-20 20:28:39 JST by the ABCI monitor (abci/monitor, local to ABCI).
+Updated 2026-10-20 21:08:00 JST by the ABCI monitor (abci/monitor, local to ABCI).
 
 Stage of the ABCI pipeline: **ctl**
 
 | model | condition | runs | completed | success | interrupted | errors |
 |---|---|---|---|---|---|---|
-| holo4-35b-a3b | C2 | 1 | 1 | 1 | 0 | 0 |
-| holo4-35b-a3b | C3 | 1 | 1 | 0 | 0 | 0 |
+| holo4-35b-a3b | C0 | 7 | 5 | 0 | 2 | 0 |
+| holo4-35b-a3b | C2 | 6 | 5 | 2 | 1 | 0 |
+| holo4-35b-a3b | C3 | 6 | 5 | 1 | 1 | 0 |
 
 Run-level details: [analysis/runs_manifest.csv](analysis/runs_manifest.csv) (one row per attempt; interrupted
 attempts are kept, as the protocol asks).  Raw traces, screenshots and the viewer stay on ABCI under the
