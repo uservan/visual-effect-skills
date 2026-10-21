@@ -66,6 +66,6 @@ These papers already study real GUI exploration, visual screenshots, or effect-d
 
 ## Status
 
-**Planning stage:** No experiments run, no results reported, no model weights trained.
+**Environment and harness preparation:** Official OSWorld desktop/GIMP smoke checks are working. The first Holo4-27B A/B pilot run was invalid (model-server chat-template error) and has not been rerun. No model episode or benchmark result has been produced yet; no model weights have been trained.
 
-For the next implementation agent, start with **[docs/motivation-experiments.md](docs/motivation-experiments.md)**, not the proposed method.
+For the next implementation agent, start with **[docs/motivation-benchmark-gaps.md](docs/motivation-benchmark-gaps.md)** (current motivation plan) and **[docs/benchmark-construction.md](docs/benchmark-construction.md)** (benchmark design). The earlier skill-audit plan in [docs/motivation-experiments.md](docs/motivation-experiments.md) is superseded as the motivation.
