@@ -1,0 +1,13 @@
+{
+  "model_id": "Hcompany/Holo4-27B",
+  "revision": "4de03cfeee1d930b616bfd4817570293f29ad8b9",
+  "license": "cc-by-nc-4.0",
+  "safetensors": {
+    "parameters": {
+      "BF16": 27356728560
+    },
+    "total": 27356728560
+  },
+  "download_status": "complete",
+  "weights_path": "/scratch/pioneer/jobs/wxy320/visual_effect_runtime/models/Holo4-27B"
+}

@@ -1,0 +1,12 @@
+{
+  "dataset_id": "xlangai/ubuntu_osworld",
+  "dataset_revision_at_inspection": "a5d9c3eaae98eebf6e3a0beb84e7e47cf72ae133",
+  "asset": "Ubuntu.qcow2.zip",
+  "downloaded_zip_bytes": 12273896463,
+  "extracted_qcow_bytes": 24460197888,
+  "qemu_container_source": "docker://happysixd/osworld-docker:latest",
+  "sif_sha256": "463f76c3287f4bfea46d273cc64cb64804668004bbeda3d73d9ce7335f07a474",
+  "qemu_version": "9.1.0",
+  "guest_gimp_version": "2.10.30",
+  "launch_adapter": "direct loader outside user namespace; KVM; disposable disk/firmware overlays"
+}

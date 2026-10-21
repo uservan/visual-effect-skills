@@ -1,0 +1,14 @@
+[project]
+name = "visual-effect-skills"
+version = "0.1.0"
+description = "Recorded open-weight GUI reproduction and skill analysis"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28,<0.29",
+    "pillow>=11",
+    "pyyaml>=6",
+    "numpy>=2",
+    "scikit-image>=0.25",
+    "requests>=2.32",
+    "opencv-python-headless>=5.0.0.93",
+]
