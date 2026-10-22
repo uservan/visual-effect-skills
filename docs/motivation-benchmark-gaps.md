@@ -1,10 +1,34 @@
 # Motivation — Gaps in Professional-Software GUI Benchmarks
 
-> **Current agreed plan · 2026-10-21.** Supersedes the skill-audit / paired-intervention plan in
-> [motivation-experiments.md](motivation-experiments.md) as the motivation for the benchmark.
-> No result below exists yet; every claim is a hypothesis to be tested and reported even if it fails.
+> **Current agreed plan · revised 2026-10-22.** Supersedes the skill-audit / paired-intervention plan in
+> [motivation-experiments.md](motivation-experiments.md). Priority: build the benchmark first; a method is decided later
+> from what the benchmark shows. Every claim is a hypothesis to be tested and reported even if it fails.
 
-## 0. Claims to test
+## Revised framing (2026-10-22) — read this first
+
+The G1/G2/G3 split below proved hard to operationalise: "imperative vs outcome-described" has no clear boundary, and a
+first LLM pre-label (guidelines v0.1/v0.2) over-counted outcome tasks (e.g. "Exposure +1.0 → Midtones green -20" was
+labelled outcome). Those pre-labels are **withdrawn**. The claim is now:
+
+> Existing professional-software benchmarks contain **explicit** tasks, which can be scored but only test operating the
+> UI (and models score high on them), and **vague** tasks, which test judgement but cannot be scored reliably (models
+> either fail or are judged by direction only). Professional software also needs knowledge that models lack, so manuals
+> belong in the environment.
+
+| # | Experiment | Question | Method | Status |
+|---|---|---|---|---|
+| E1 | Task split | Share of explicit vs vague tasks per benchmark | Per clause: is a real command named (incl. control names like Brightness, presets) and are values exact or not needed? Task class derived by rule: **explicit** if every edit clause has both; else **vague_missing_values** or **vague_missing_tool**. Three open models vote (Qwen3.5-397B, GLM-5.3, DeepSeek-V4.1-Flash); 2–1 splits spot-checked, 3-way splits adjudicated by a human. Script `scripts/benchmark_audit/split_tasks.py`. | Pilot 30 tasks: Qwen–GLM agreement 87 %. Full run in progress |
+| E1b | Published scores by class | Do models score high on explicit and low (or suspiciously high) on vague tasks? | Join E1 classes with published per-task results (OSWorld-Verified trajectories: 99 agent runs; others if released) | **PSBench paper** gives the cleanest evidence: success falls easy→hard for every agent (Agent S3 69.9→18.1 %), and image-generation models that never open Photoshop pass 100 % easy/medium and 72–90 % hard under the same evaluation (see `code_findings.md` §7–9). OSWorld GIMP (94 agents) is too small and mostly UI-operation tasks to separate classes |
+| E2 | Evaluator audit | How are vague tasks scored? | Evaluator type from code, cross-tabbed with E1 | Done: `code_findings.md`, `evaluator_labels.csv` |
+| E3 | Judge stress test (was M3) | Can the published judge separate correct from wrong results on vague tasks? | 30 vague + 30 explicit PSBench tasks; candidates END, identity, ×0.5, ×3, opposite, naive global; PSBench prompt verbatim; judges Qwen3.5 and GLM-5.3 (open models only); human acceptability ratings on a subset. **Control**: the judge should work on explicit tasks; if it fails only on vague ones, vagueness is the cause. | Candidates built for 60 hard tasks; resample by E1 class |
+| E4 | Knowledge probe (was M2) | Do models know these apps, and do manuals help? | Q1 location / Q2 function / Q3 effect / Q4 goal→tool from official manuals; closed vs open book. Exposure contrast: **GIMP = high exposure; darktable, OpenToonz = low exposure** (Krita in between). Photoshop only if the user supplies Adobe's PDF guide (helpx.adobe.com blocks automated access; not circumvented). Questions must quote the manual verbatim (checked by script); two generator models alternate and results are split by generator; human verification before counting. Scripts `scripts/e4/` | Manuals: GIMP 2.10 (273 units), Krita 5.3 (93), OpenToonz (118 sections), darktable 5.6 refetching |
+
+Dropped: skill-content audit (the paper's point is that manuals belong in the environment, which E4 tests).
+Falsifiers: E3 judges reject wrong results on vague tasks as well as on explicit ones; humans agree on a narrow
+acceptable range for vague instructions (then a better judge, not a determinate benchmark, is the fix); vague tasks
+are rare.
+
+## 0. Claims to test (original, superseded by the section above)
 
 Existing GUI benchmarks for professional software may not measure what real professional use requires.
 We test three falsifiable gaps:
@@ -35,7 +59,10 @@ Unit: one task. Report denominators per benchmark; never pool benchmarks into a 
 ### 1.2 Labels (multi-field)
 
 - **Instruction form:** `procedural_explicit` (tool + parameters/steps) · `tool_named` (tool, no parameters) ·
-  `outcome_described` (desired result, no tool) · `reference_image` (target image given) · `infeasible`.
+  `attribute_direction` (one basic attribute + direction, e.g. "slightly brighter"; no tool) ·
+  `outcome_described` (desired result, no tool) · `reference_image` (target image given) · `infeasible` · `non_visual`.
+  Labelled per component; the task takes its most demanding component. Full rules:
+  [annotation_guidelines.md](../motivation/benchmark_audit/annotation_guidelines.md).
 - **Required knowledge:** K1 UI location · K2 function/procedure · K3 effect of parameters · K4 state-conditional effect ·
   K5 goal-to-action (definitions as in motivation-experiments.md §1.2).
 - **Initial state:** flat image · stateful project (layers/masks/history/scene).
@@ -51,7 +78,9 @@ Unit: one task. Report denominators per benchmark; never pool benchmarks into a 
 4. Evaluator type and documentation are labelled from **code**, not paper text, where code exists.
 
 Known so far (unadjudicated, heuristic): PSBench hard tier 175/197 instructions name no tool and no value;
-the PSBench judge only receives START and RESULT and is told to accept "subtle but directionally correct" edits;
+the PSBench judge only receives START and RESULT and is told to accept "subtle but directionally correct" edits
+(the code also defines two looser `judge_policy` modes, but no rubric in the pinned HF data uses them — all 600 are `default`);
+CUA-World `underwater_wave_distortion_fx` ships an instruction with leaked LLM drafting text and is truncated;
 PSBench and CutVerse evaluation code pass no documentation to the agent (CutVerse's `knowledge_context` is
 hard-coded to `""`); ProSoftArena reports a ChemDraw knowledge-card ablation only.
 

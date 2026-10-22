@@ -1,0 +1,229 @@
+<title>专业软件基准任务审计</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column for findings, full-width instrument panels for the distributions and the task browser.
+   Instruction forms run on an ordinal ramp from "told exactly what to do" (pale) to "must decide what to do" (deep). */
+:root{
+  --ink:#16202e; --ink-2:#4a5568; --ink-3:#7b8597;
+  --paper:#f7f8fa; --panel:#ffffff; --rule:#dde1e8;
+  --accent:#2b4fa8;
+  --f-proc:#d6dcea; --f-tool:#a7b6d8; --f-attr:#6f89c4; --f-out:#22408f;
+  --f-inf:#e6e2d8; --f-nv:#efe9dc;
+  --warn:#a3561b; --warn-bg:#fbf1e7;
+  --font-display:"Bricolage Grotesque","Noto Sans SC",system-ui,sans-serif;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ink:#e7ebf2; --ink-2:#b2bacb; --ink-3:#8590a5;
+    --paper:#0f141c; --panel:#161d28; --rule:#2a3342;
+    --accent:#8fa9ec;
+    --f-proc:#3a4459; --f-tool:#4e6496; --f-attr:#6f8fd6; --f-out:#a9bff5;
+    --f-inf:#3b3a35; --f-nv:#45423a;
+    --warn:#f0a868; --warn-bg:#2b2117;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#e7ebf2; --ink-2:#b2bacb; --ink-3:#8590a5;
+  --paper:#0f141c; --panel:#161d28; --rule:#2a3342;
+  --accent:#8fa9ec;
+  --f-proc:#3a4459; --f-tool:#4e6496; --f-attr:#6f8fd6; --f-out:#a9bff5;
+  --f-inf:#3b3a35; --f-nv:#45423a;
+  --warn:#f0a868; --warn-bg:#2b2117;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:40px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+p{margin:0;max-width:68ch}
+.lede{display:grid;gap:12px}
+.eyebrow{font:500 12px/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.caveat{border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);padding:12px 16px;border-radius:6px;max-width:80ch;font-size:14px}
+.caveat b{color:var(--warn)}
+section{display:grid;gap:16px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px}
+.sub{color:var(--ink-2);font-size:14px}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:20px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.seg button{font:500 13px var(--font-body);background:transparent;color:var(--ink-2);border:0;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--panel)}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:2px;display:inline-block;border:1px solid var(--rule)}
+.bars{display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 64px;align-items:center;gap:12px}
+.bar-label{font-size:13px;line-height:1.3}
+.bar-label small{display:block;color:var(--ink-3);font:12px var(--font-mono)}
+.bar{display:flex;height:26px;border-radius:4px;overflow:hidden;background:var(--paper)}
+.bar div{height:100%;display:flex;align-items:center;justify-content:center;font:500 11px var(--font-mono);color:var(--ink);min-width:0;overflow:hidden;white-space:nowrap}
+.bar div.dark{color:var(--panel)}
+.bar-pct{font:500 13px var(--font-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--accent)}
+.bar-pct small{display:block;color:var(--ink-3);font-weight:400;font-size:11px}
+.findings{display:grid;gap:14px;counter-reset:f;padding:0;margin:0;list-style:none}
+.findings li{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;max-width:84ch}
+.findings .tag{grid-row:span 2;font:500 11px/1 var(--font-mono);padding:5px 7px;border-radius:4px;background:var(--paper);border:1px solid var(--rule);color:var(--ink-2);height:fit-content;white-space:nowrap}
+.findings .where{font:12px var(--font-mono);color:var(--ink-3);word-break:break-all}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.filters label{font-size:13px;color:var(--ink-2);display:inline-flex;gap:6px;align-items:center}
+select,input[type=search]{font:14px var(--font-body);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:6px 8px}
+input[type=search]{min-width:0;width:220px;max-width:100%}
+.count{font:500 13px var(--font-mono);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.table-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--rule)}
+th{font:500 12px var(--font-mono);letter-spacing:.04em;color:var(--ink-3);text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
+td.id{font:12px var(--font-mono);color:var(--ink-2);white-space:nowrap}
+td.ins{max-width:46ch}
+.chip{display:inline-block;font:500 11px var(--font-mono);padding:2px 6px;border-radius:3px;white-space:nowrap}
+.comps{display:grid;gap:4px;margin-top:6px}
+.comps div{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;font-size:12.5px;color:var(--ink-2)}
+.changed{font:11px var(--font-mono);color:var(--warn)}
+.ev{font:12px var(--font-mono);color:var(--ink-2)}
+.more{display:flex;justify-content:center;padding:12px}
+.more button{font:500 13px var(--font-body);border:1px solid var(--rule);background:var(--panel);color:var(--accent);border-radius:6px;padding:8px 16px;cursor:pointer}
+@media (max-width:640px){.bar-row{grid-template-columns:96px 1fr 52px}.bar div{font-size:0}}
+@media (prefers-reduced-motion:no-preference){.bar div{transition:flex-basis .35s ease}}
+</style>
+
+<div class="wrap">
+  <header class="lede">
+    <div class="eyebrow">Motivation · M1 任务审计 · 2026-10-22</div>
+    <h1>专业软件基准任务审计</h1>
+    <p>四个专业软件 GUI 基准共 729 题。每题标注指令形式（agent 被告知了多少、需要自己决定多少）和评测器类型（从评测代码读出）。</p>
+    <div class="caveat"><b>预标注，未经人工裁决。</b>指令形式由 Qwen3.5-397B 按标注指南预标；PSBench、OSWorld、OSExpert 的评测器类型由人读代码确定，CUA-World 的评测器类型为模型读 verifier.py 的预标。正式数字以双人标注和裁决后为准。</div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <div><h2>指令形式分布</h2><p class="sub">按每题最难的子要求定整题形式。条形长度按题数比例绘制。</p></div>
+      <div class="seg" role="group" aria-label="标注指南版本" id="vseg"></div>
+    </div>
+    <div class="panel" style="display:grid;gap:16px">
+      <div class="legend" id="legend"></div>
+      <div class="bars" id="formbars"></div>
+    </div>
+    <p class="sub" id="vnote"></p>
+  </section>
+
+  <section>
+    <div class="sec-head"><div><h2>子要求层面</h2><p class="sub">只看被判为"描述结果型"的题：其中多少比例的子要求本身是描述结果型。比例低说明整题是被一两个子要求拉上去的。</p></div></div>
+    <div class="panel"><div class="bars" id="compbars"></div></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><div><h2>评测器类型</h2><p class="sub">取每题最弱的那个评测函数。只有"对比参考答案"和"精确状态"能判定结果是否真的对。</p></div></div>
+    <div class="panel" style="display:grid;gap:16px">
+      <div class="legend" id="evlegend"></div>
+      <div class="bars" id="evbars"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>代码层面的发现</h2>
+    <ul class="findings">
+      <li><span class="tag">PSBench</span><span>裁判只看 START 和 RESULT，看不到参考答案；系统提示要求"接受细微但可见的方向正确的变化"。代码里另有两种更宽松的 judge_policy，但 600 题全部是 default。</span><span class="where">PSBench/photoshop_evaluators.py · PhotoshopEvaluator._build_messages</span></li>
+      <li><span class="tag">OSWorld</span><span>"调亮 / 加对比度 / 加饱和度"类任务只和原图比方向，再检查结构相似，变化多少都算过。</span><span class="where">desktop_env/evaluators/metrics/gimp.py · check_*_increase/decrease_and_structure_sim</span></li>
+      <li><span class="tag">OSExpert</span><span>20 道 GIMP 任务里 16 道引用的评测函数在 OSExpert、OSWorld 上游和 VisualSkills 仓库里都没有实现，第三方无法复现评分。</span><span class="where">crop_cat_face, image_similarity, blur_cat_body 等 7 个函数</span></li>
+      <li><span class="tag">CUA-World</span><span>apply_mosaic_censor_fx：块状程度只到"弱"（0.10–0.15，注释自己说正常图 &lt;0.10、马赛克 &gt;0.30）就得 60 分，60 分时再白送 20 分"隐式视觉验证"，过线 70。</span><span class="where">opentoonz_env/tasks/apply_mosaic_censor_fx/verifier.py L49–117</span></li>
+      <li><span class="tag">CUA-World</span><span>underwater_wave_distortion_fx 的指令里混进了 LLM 起草时的思考文字（"Wait, I'll remove…"），且被截断。</span><span class="where">opentoonz_env/tasks/underwater_wave_distortion_fx/task.json</span></li>
+      <li><span class="tag">OSExpert</span><span>gimp_T4 两个评测函数取"与"，一个完美的水平镜像结果也通不过。</span><span class="where">motivation/task_audit/verifier_findings.md</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sec-head"><div><h2>逐题浏览</h2><p class="sub">展开子要求可看模型怎么拆分指令。标注版本跟随上方切换。</p></div><span class="count" id="count"></span></div>
+    <div class="filters">
+      <label for="fb">基准 <select id="fb"></select></label>
+      <label for="ft">难度 <select id="ft"></select></label>
+      <label for="ff">形式 <select id="ff"></select></label>
+      <label for="fe">评测器 <select id="fe"></select></label>
+      <label for="fc"><input type="checkbox" id="fc"> 只看两版不同</label>
+      <input type="search" id="fq" placeholder="搜索指令或任务 ID" aria-label="搜索指令或任务 ID">
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr><th>任务</th><th>指令</th><th>形式</th><th>知识</th><th>评测器</th></tr></thead><tbody id="rows"></tbody></table>
+      <div class="more" id="more" hidden><button type="button" id="morebtn">再显示 100 题</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA=/*__DATA__*/null;
+const FORMS=[['procedural_explicit','写明步骤','--f-proc',0],['tool_named','点名工具','--f-tool',0],['attribute_direction','属性 / 基础操作','--f-attr',1],['outcome_described','描述结果','--f-out',1],['infeasible','不可行','--f-inf',0],['non_visual','非视觉','--f-nv',0],['reference_image','给参考图','--f-nv',0]];
+const EVS=[['exact_state','精确状态','--f-proc'],['metric_vs_reference','对比参考答案','--f-tool'],['direction_only','只看方向','--f-attr'],['threshold_heuristic','手设阈值','--f-attr'],['vlm_rubric','VLM 打分','--f-out'],['hybrid_vlm_and_programmatic','VLM + 程序','--f-out'],['unreleased','代码未公开','--warn'],['infeasible_check','不可行判定','--f-inf']];
+const VNAME={qwen35:'指南 v0.1',qwen35_v02:'指南 v0.2'};
+const GROUPS=[['PSBench','easy','PSBench','easy'],['PSBench','medium','PSBench','medium'],['PSBench','hard','PSBench','hard'],['OSWorld','','OSWorld','GIMP'],['OSExpert','','OSExpert','GIMP'],['CUA-World','','CUA-World','OpenToonz']];
+let ver=DATA.versions[DATA.versions.length-1],shown=100;
+const $=s=>document.querySelector(s);
+const form=(t,v=ver)=>t.v[v]?.f||'';
+const css=v=>`var(${v})`;
+function legend(el,list){el.innerHTML=list.map(([k,n,c])=>`<span><i class="sw" style="background:${css(c)}"></i>${n}</span>`).join('')}
+function rowsFor(b,tier){return DATA.tasks.filter(t=>t.b===b&&(!tier||t.tier===tier))}
+function stack(list,getter,items){
+  const n=items.length,c={};items.forEach(t=>{const k=getter(t);c[k]=(c[k]||0)+1});
+  return {n,html:list.filter(([k])=>c[k]).map(([k,name,col,dark])=>`<div class="${dark?'dark':''}" style="flex:0 0 ${100*c[k]/n}%;background:${css(col)}" title="${name}: ${c[k]} / ${n}">${c[k]}</div>`).join(''),c};
+}
+function label(g){return `<div class="bar-label">${g[2]}<small>${g[3]}</small></div>`}
+function drawForms(){
+  $('#formbars').innerHTML=GROUPS.map(g=>{const items=rowsFor(g[0],g[1]),s=stack(FORMS,t=>form(t),items);const o=s.c.outcome_described||0;
+    return `<div class="bar-row">${label(g)}<div class="bar" role="img" aria-label="${g[2]} ${g[3]} 指令形式分布">${s.html}</div><div class="bar-pct">${Math.round(100*o/s.n)}%<small>描述结果 · n=${s.n}</small></div></div>`}).join('');
+  if(DATA.versions.length>1){const [a,b]=DATA.versions;const ch=DATA.tasks.filter(t=>form(t,a)&&form(t,b)&&form(t,a)!==form(t,b)).length;
+    $('#vnote').textContent=`v0.1 → v0.2 共有 ${ch} 题的整题形式发生变化。v0.2 把画简单图形、涂纯色、加文字、裁剪移动等基础操作归入"属性 / 基础操作"，并且不再把"选一块区域"这类范围限定语算作子要求。`}
+  else $('#vnote').textContent='v0.2 正在重跑，完成后这里会出现版本切换。';
+  drawComp();
+}
+function drawComp(){
+  $('#compbars').innerHTML=GROUPS.map(g=>{const items=rowsFor(g[0],g[1]).filter(t=>form(t)==='outcome_described');
+    if(!items.length)return `<div class="bar-row">${label(g)}<div class="bar"></div><div class="bar-pct">—<small>n=0</small></div></div>`;
+    const share=items.reduce((a,t)=>a+t.v[ver].no/Math.max(1,t.v[ver].nc),0)/items.length;
+    return `<div class="bar-row">${label(g)}<div class="bar" role="img" aria-label="平均描述结果子要求占比 ${Math.round(share*100)}%"><div class="dark" style="flex:0 0 ${share*100}%;background:${css('--f-out')}"></div><div style="flex:1 1 auto;background:${css('--f-proc')}"></div></div><div class="bar-pct">${Math.round(share*100)}%<small>n=${items.length} 题</small></div></div>`}).join('');
+}
+function drawEv(){
+  legend($('#evlegend'),EVS);
+  const G=[['PSBench','','PSBench','600 题'],['OSWorld','','OSWorld','GIMP'],['OSExpert','','OSExpert','GIMP'],['CUA-World','','CUA-World','预标']];
+  $('#evbars').innerHTML=G.map(g=>{const items=rowsFor(g[0]),s=stack(EVS.map(e=>[e[0],e[1],e[2],['vlm_rubric','hybrid_vlm_and_programmatic','unreleased'].includes(e[0])]),t=>t.ev,items);
+    const strong=(s.c.metric_vs_reference||0)+(s.c.exact_state||0);
+    return `<div class="bar-row">${label(g)}<div class="bar" role="img" aria-label="${g[2]} 评测器类型">${s.html}</div><div class="bar-pct">${strong}<small>能判对错 / ${s.n}</small></div></div>`}).join('');
+}
+function opts(sel,list,all){sel.innerHTML=`<option value="">${all}</option>`+list.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}
+const FN=Object.fromEntries(FORMS.map(f=>[f[0],f])),EN=Object.fromEntries(EVS.map(e=>[e[0],e[1]]));
+function chip(f){const x=FN[f];if(!x)return '';return `<span class="chip" style="background:${css(x[2])};color:${x[3]?css('--panel'):css('--ink')}">${x[1]}</span>`}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function filtered(){
+  const b=$('#fb').value,ti=$('#ft').value,f=$('#ff').value,e=$('#fe').value,q=$('#fq').value.trim().toLowerCase(),c=$('#fc').checked&&DATA.versions.length>1;
+  return DATA.tasks.filter(t=>(!b||t.b===b)&&(!ti||t.tier===ti)&&(!f||form(t)===f)&&(!e||t.ev===e)&&(!q||t.ins.toLowerCase().includes(q)||t.id.toLowerCase().includes(q))&&(!c||form(t,DATA.versions[0])!==form(t,DATA.versions[1])));
+}
+function drawRows(){
+  const list=filtered();$('#count').textContent=`${list.length} / ${DATA.tasks.length} 题`;
+  const other=DATA.versions.find(v=>v!==ver);
+  $('#rows').innerHTML=list.slice(0,shown).map(t=>{const l=t.v[ver]||{};const o=other&&t.v[other]&&t.v[other].f!==l.f?`<div class="changed">${VNAME[other]}：${FN[t.v[other].f]?.[1]||t.v[other].f}</div>`:'';
+    const comps=(l.c||[]).map(([f,x])=>`<div>${chip(f)}<span>${esc(x)}</span></div>`).join('');
+    return `<tr><td class="id">${esc(t.b)}<br>${esc(t.id)}${t.tier?'<br>'+t.tier:''}</td><td class="ins">${esc(t.ins.slice(0,600))}${comps?`<details><summary class="sub">子要求 ${l.nc}</summary><div class="comps">${comps}</div></details>`:''}</td><td>${chip(l.f)}${o}</td><td class="ev">${esc((l.k||'').replaceAll(';',' '))}</td><td class="ev" title="${esc(t.evn)}">${EN[t.ev]||esc(t.ev)}</td></tr>`}).join('');
+  $('#more').hidden=list.length<=shown;
+}
+function drawSeg(){
+  $('#vseg').innerHTML=DATA.versions.map(v=>`<button type="button" aria-pressed="${v===ver}" data-v="${v}">${VNAME[v]||v}</button>`).join('');
+  $('#vseg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ver=b.dataset.v;drawSeg();drawForms();drawRows()});
+}
+legend($('#legend'),FORMS.slice(0,6));
+opts($('#fb'),[...new Set(DATA.tasks.map(t=>t.b))].map(b=>[b,b]),'全部');
+opts($('#ft'),[['easy','easy'],['medium','medium'],['hard','hard']],'全部');
+opts($('#ff'),FORMS.slice(0,6).map(f=>[f[0],f[1]]),'全部');
+opts($('#fe'),EVS.map(e=>[e[0],e[1]]),'全部');
+['#fb','#ft','#ff','#fe','#fc'].forEach(s=>$(s).onchange=()=>{shown=100;drawRows()});
+$('#fq').oninput=()=>{shown=100;drawRows()};
+$('#morebtn').onclick=()=>{shown+=100;drawRows()};
+drawSeg();drawForms();drawEv();drawRows();
+</script>

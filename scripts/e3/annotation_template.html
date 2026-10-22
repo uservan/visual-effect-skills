@@ -1,0 +1,220 @@
+<title>修图结果人工评判</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a darkroom viewing desk. Images sit on a neutral 18%-grey surround (the colour-critical viewing
+   convention), so the page commits to one dark neutral theme in every viewer setting. */
+:root{
+  color-scheme:dark;
+  --surround:#2b2b2b;   /* neutral grey around images, no hue bias on purpose */
+  --desk:#1d1d1d; --panel:#262626; --rule:#3a3a3a;
+  --ink:#ececec; --ink-2:#b4b4b4; --ink-3:#8a8a8a;
+  --mark:#e0b25a;       /* safelight amber: the one accent */
+  --yes:#7cc49a; --no:#e48b7f; --maybe:#c9c9c9;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{background:var(--desk);color:var(--ink)}
+body{margin:0;font:15px/1.6 var(--font-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+h1{font-size:22px;margin:0;font-weight:700}
+p{margin:0;max-width:72ch}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-2)}
+.small{font-size:13px}
+.progress{height:4px;background:var(--rule);border-radius:2px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--mark);width:0}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:18px;display:grid;gap:12px}
+.instr{font-size:16px;line-height:1.7;max-width:none}
+.instr b{color:var(--mark);font-weight:500;font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;display:block;margin-bottom:4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+figure{margin:0;background:var(--surround);border-radius:6px;padding:12px;display:grid;gap:8px;justify-items:center;align-content:start}
+figure img{max-width:100%;height:auto;display:block;cursor:zoom-in}
+figcaption{font:500 12px var(--font-mono);letter-spacing:.08em;color:var(--ink-2)}
+.q{display:grid;gap:8px}
+.q h2{font-size:15px;margin:0;font-weight:500}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:500 14px var(--font-body);color:var(--ink);background:var(--desk);border:1px solid var(--rule);border-radius:6px;padding:8px 14px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.opts button kbd{font:11px var(--font-mono);color:var(--ink-3);border:1px solid var(--rule);border-radius:3px;padding:0 4px}
+.opts button[aria-pressed="true"]{border-color:var(--mark);background:#3a3122}
+.opts button[data-v="yes"][aria-pressed="true"]{border-color:var(--yes)}
+.opts button[data-v="no"][aria-pressed="true"]{border-color:var(--no)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+.nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.btn{font:500 14px var(--font-body);border-radius:6px;padding:9px 16px;cursor:pointer;border:1px solid var(--rule);background:var(--panel);color:var(--ink)}
+.btn.primary{background:var(--mark);border-color:var(--mark);color:#1d1d1d}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.save{font:12px var(--font-mono);color:var(--ink-3)}
+.save.err{color:var(--no)}
+.guide ol{margin:0;padding-left:20px;display:grid;gap:6px;max-width:76ch}
+.guide label{display:grid;gap:6px;font-size:14px;max-width:420px}
+select{font:14px var(--font-body);background:var(--desk);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:8px}
+.notice{border:1px solid var(--no);color:var(--ink);background:#3a2422;border-radius:6px;padding:12px 14px}
+.stats{font:13px var(--font-mono);color:var(--ink-2)}
+dialog{background:var(--surround);border:0;padding:12px;max-width:96vw;max-height:94vh}
+dialog img{max-width:92vw;max-height:88vh;display:block}
+dialog::backdrop{background:rgba(0,0,0,.8)}
+@media (max-width:720px){.pair{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <h1>修图结果人工评判</h1>
+    <span class="mono muted small" id="count">载入中</span>
+  </div>
+  <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+
+  <section class="panel guide" id="intro">
+    <p>每题给出一条 Photoshop 修图指令、原图（START）和一张修改后的结果（RESULT）。请像一位专业修图师验收工作那样判断这张结果。</p>
+    <ol>
+      <li><b>是否完成</b>：结果是否达到了指令的要求。只看画面本身，不需要猜测用了什么工具。</li>
+      <li><b>修改程度</b>：和指令的要求相比，改得不够、合适、过头、方向不对，还是基本没变。</li>
+      <li>拿不准就选"不确定"，不要猜。点击图片可以放大。</li>
+      <li>答案自动保存，可以随时离开，回来后从上次的位置继续。全部完成后点"提交"。</li>
+    </ol>
+    <label for="batch">你负责的批次（每批 100 题，约 20–25 分钟）
+      <select id="batch">
+        <option value="">请选择</option>
+        <option value="A">A 批</option>
+        <option value="B">B 批</option>
+        <option value="C">C 批</option>
+      </select>
+    </label>
+    <label for="expertise">你的修图经验
+      <select id="expertise">
+        <option value="">请选择</option>
+        <option value="pro">专业（以修图或设计为工作）</option>
+        <option value="regular">经常使用 Photoshop、Lightroom 等软件</option>
+        <option value="novice">偶尔使用或新手</option>
+      </select>
+    </label>
+    <div class="notice" id="nodb" hidden>无法保存答案：需要登录，并且对这个页面有 Contributor 或以上权限。请联系分享这个页面的人。</div>
+    <div class="nav"><span class="stats" id="ownerStats"></span><button class="btn primary" id="startBtn" type="button" disabled>开始评判</button></div>
+  </section>
+
+  <section class="panel" id="task" hidden>
+    <p class="instr"><b>指令</b><span id="ins"></span></p>
+    <div class="pair">
+      <figure><img id="imgS" alt="原图 START"><figcaption>START 原图</figcaption></figure>
+      <figure><img id="imgR" alt="结果 RESULT"><figcaption>RESULT 结果</figcaption></figure>
+    </div>
+    <div class="q">
+      <h2>1. 结果是否完成了指令的要求？</h2>
+      <div class="opts" data-q="done" role="group" aria-label="是否完成">
+        <button type="button" data-v="yes" aria-pressed="false"><kbd>1</kbd>完成</button>
+        <button type="button" data-v="no" aria-pressed="false"><kbd>2</kbd>未完成</button>
+        <button type="button" data-v="unsure" aria-pressed="false"><kbd>3</kbd>不确定</button>
+      </div>
+    </div>
+    <div class="q">
+      <h2>2. 和指令要求相比，修改程度如何？</h2>
+      <div class="opts" data-q="degree" role="group" aria-label="修改程度">
+        <button type="button" data-v="none" aria-pressed="false"><kbd>Q</kbd>基本没变</button>
+        <button type="button" data-v="under" aria-pressed="false"><kbd>W</kbd>明显不足</button>
+        <button type="button" data-v="ok" aria-pressed="false"><kbd>E</kbd>大致合适</button>
+        <button type="button" data-v="over" aria-pressed="false"><kbd>R</kbd>明显过度</button>
+        <button type="button" data-v="wrong" aria-pressed="false"><kbd>T</kbd>方向不对</button>
+      </div>
+    </div>
+    <div class="nav">
+      <div style="display:flex;gap:8px"><button class="btn" id="prevBtn" type="button">← 上一题</button><button class="btn" id="nextBtn" type="button">下一题 →</button></div>
+      <span class="save" id="save"></span>
+      <button class="btn primary" id="submitBtn" type="button">提交</button>
+    </div>
+  </section>
+
+  <section class="panel" id="done" hidden>
+    <p id="doneMsg"></p>
+    <div class="nav"><button class="btn" id="backBtn" type="button">回去修改</button></div>
+  </section>
+</div>
+<dialog id="zoom"><img id="zoomImg" alt="放大查看"></dialog>
+
+<script>
+const DATA=/*__DATA__*/null;
+const $=s=>document.querySelector(s);
+let db=null,uid=null,ref=null,order=[],pos=0,state={answers:{},expertise:'',batch:'',submitted:false},writing=false,dirty=false,shownAt=0;
+
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+// Indexes of the chosen batch's items, in an order fixed per annotator.
+function shuffled(seed,batch){const a=DATA.items.map((_,i)=>i).filter(i=>DATA.items[i].b===batch);let x=hash(seed)||1;for(let i=a.length-1;i>0;i--){x^=x<<13;x^=x>>>17;x^=x<<5;const j=(x>>>0)%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const total=()=>order.length||DATA.items.filter(it=>it.b===state.batch).length;
+const answered=()=>order.filter(i=>{const a=state.answers[DATA.items[i].id];return a&&a.done&&a.degree}).length;
+
+function paintCount(){
+  if(!state.batch){$('#count').textContent='请选择批次';$('#prog').style.width='0';return}
+  const n=answered(),N=total();
+  $('#count').textContent=`${n} / ${N} 已完成`;$('#prog').style.width=`${100*n/N}%`;
+}
+function show(i){
+  pos=Math.max(0,Math.min(order.length-1,i));const it=DATA.items[order[pos]],t=DATA.tasks[it.t];
+  $('#ins').textContent=t.ins;$('#imgS').src=t.start;$('#imgR').src=it.img;
+  const a=state.answers[it.id]||{};
+  document.querySelectorAll('.opts').forEach(g=>g.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(a[g.dataset.q]===b.dataset.v))));
+  $('#prevBtn').disabled=pos===0;$('#nextBtn').disabled=pos===order.length-1;
+  $('#count').textContent=`${state.batch} 批 · 第 ${pos+1} 题 · ${answered()} / ${total()} 已完成`;$('#prog').style.width=`${100*answered()/total()}%`;
+  shownAt=performance.now();
+}
+async function persist(){
+  if(!ref)return;
+  if(writing){dirty=true;return}
+  writing=true;$('#save').className='save';$('#save').textContent='保存中…';
+  try{
+    do{dirty=false;await ref.set({...state,updated_at:new Date().toISOString(),n_items:total()})}while(dirty);
+    $('#save').textContent='已保存';
+  }catch(e){$('#save').className='save err';$('#save').textContent=e&&e.code==='invalid_argument'?'无法保存：没有写入权限':'保存失败，下次作答时会重试'}
+  writing=false;
+}
+function answer(q,v){
+  const it=DATA.items[order[pos]];const a={...(state.answers[it.id]||{})};
+  a[q]=v;a.ms=Math.round((a.ms||0)+performance.now()-shownAt);shownAt=performance.now();
+  state.answers={...state.answers,[it.id]:a};show(pos);persist();
+  if(a.done&&a.degree&&pos<order.length-1)setTimeout(()=>show(pos+1),220);
+}
+document.querySelectorAll('.opts').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button');if(b)answer(g.dataset.q,b.dataset.v)}));
+const KEYS={'1':['done','yes'],'2':['done','no'],'3':['done','unsure'],q:['degree','none'],w:['degree','under'],e:['degree','ok'],r:['degree','over'],t:['degree','wrong']};
+document.addEventListener('keydown',e=>{
+  if($('#task').hidden||e.target.tagName==='SELECT'||e.metaKey||e.ctrlKey)return;
+  const k=KEYS[e.key.toLowerCase()];if(k){answer(...k);return}
+  if(e.key==='ArrowRight')show(pos+1);if(e.key==='ArrowLeft')show(pos-1);
+});
+$('#prevBtn').onclick=()=>show(pos-1);$('#nextBtn').onclick=()=>show(pos+1);
+['#imgS','#imgR'].forEach(s=>$(s).onclick=()=>{$('#zoomImg').src=$(s).src;$('#zoom').showModal()});
+$('#zoom').onclick=()=>$('#zoom').close();
+const ready=()=>{$('#startBtn').disabled=!state.expertise||!state.batch||!ref};
+$('#expertise').onchange=()=>{state.expertise=$('#expertise').value;ready()};
+$('#batch').onchange=()=>{state.batch=$('#batch').value;order=state.batch?shuffled(uid||'anonymous',state.batch):[];paintCount();ready()};
+$('#startBtn').onclick=()=>{
+  state.started_at=state.started_at||new Date().toISOString();persist();
+  $('#intro').hidden=true;$('#task').hidden=false;
+  const first=order.findIndex(i=>{const a=state.answers[DATA.items[i].id];return !(a&&a.done&&a.degree)});show(first<0?0:first);
+};
+$('#submitBtn').onclick=()=>{
+  const left=total()-answered();
+  state.submitted=left===0;persist();
+  $('#task').hidden=true;$('#done').hidden=false;
+  $('#doneMsg').textContent=left===0?'全部完成，已提交。谢谢！':`已保存进度，还剩 ${left} 题未完成。可以随时回来继续。`;
+};
+$('#backBtn').onclick=()=>{$('#done').hidden=true;$('#task').hidden=false;show(pos)};
+
+paintCount();
+(async()=>{
+  const [dbNs,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+  uid=user?await user.id():null;
+  if(!dbNs||!uid){$('#nodb').hidden=false;$('#count').textContent='无法保存';return}
+  db=dbNs;ref=db.doc('judgments/'+uid);
+  try{const s=await ref.get();if(s.exists)state={...state,...s.data()}}catch(e){}
+  $('#expertise').value=state.expertise||'';$('#batch').value=state.batch||'';
+  order=state.batch?shuffled(uid,state.batch):[];ready();
+  $('#startBtn').textContent=answered()?'继续评判':'开始评判';paintCount();
+  if(await user.isOwner()){
+    try{const all=await db.collection('judgments').get();
+      const n=all.docs.reduce((s,d)=>s+Object.values(d.data().answers||{}).filter(a=>a.done&&a.degree).length,0);
+      $('#ownerStats').textContent=`（仅你可见）已有 ${all.size} 位标注者，共 ${n} 条完整答案`;}catch(e){}
+  }
+})();
+</script>

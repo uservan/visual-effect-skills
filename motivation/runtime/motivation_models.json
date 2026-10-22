@@ -1,0 +1,61 @@
+{
+  "updated": "2026-10-21",
+  "policy": "open-weight models only; no closed APIs",
+  "serving": "vllm==0.31.0 (torch 2.13.0+cu130) from motivation/runtime/vllm_env.lock.txt; weights and env on node-local NVMe, see NODE_SETUP.md",
+  "models": {
+    "Qwen3.5-397B-A17B-FP8": {
+      "repo": "Qwen/Qwen3.5-397B-A17B-FP8",
+      "revision": "ea5b4f81096f3901c91dea97f81324302495781d",
+      "roles": [
+        "M1 pre-label",
+        "M2 subject",
+        "M3 judge (primary)"
+      ],
+      "complete": true,
+      "durable_path": "/shared/dedicated-fsx-data-repo-training-phx-gl-eks-us-west-2/home/jwanyang/visual_effect_data/models/Qwen3.5-397B-A17B-FP8",
+      "local_path": "/tmp/instance_storage/visual_effect_models/models/Qwen3.5-397B-A17B-FP8"
+    },
+    "Holo4-35B-A3B": {
+      "repo": "Hcompany/Holo4-35B-A3B",
+      "revision": "508458727831368da85d53a8055c2b0f923ed4f3",
+      "roles": [
+        "M2 subject",
+        "M2b GUI agent"
+      ],
+      "complete": true,
+      "durable_path": "/shared/dedicated-fsx-data-repo-training-phx-gl-eks-us-west-2/home/jwanyang/visual_effect_data/models/Holo4-35B-A3B",
+      "local_path": "/tmp/instance_storage/visual_effect_models/models/Holo4-35B-A3B"
+    },
+    "GLM-5.3-Flash": {
+      "repo": "zai-org/GLM-5.3-Flash",
+      "revision": "46a050bec13002ad29ee795c16e61cf4fa3c4a9c",
+      "roles": [
+        "M2 subject",
+        "M3 judge (second family)"
+      ],
+      "complete": true,
+      "durable_path": "/shared/dedicated-fsx-data-repo-training-phx-gl-eks-us-west-2/home/jwanyang/visual_effect_data/models/GLM-5.3-Flash",
+      "local_path": "/tmp/instance_storage/visual_effect_models/models/GLM-5.3-Flash"
+    },
+    "sam2.1-hiera-large": {
+      "repo": "facebook/sam2.1-hiera-large",
+      "revision": "665f8e2ad61cf5f53d65644ff27c8ee525124610",
+      "roles": [
+        "M3 subject masks for negative candidates"
+      ],
+      "complete": true,
+      "durable_path": "/shared/dedicated-fsx-data-repo-training-phx-gl-eks-us-west-2/home/jwanyang/visual_effect_data/models/sam2.1-hiera-large",
+      "local_path": "/tmp/instance_storage/visual_effect_models/models/sam2.1-hiera-large"
+    },
+    "DeepSeek-V4.1-Flash": {
+      "repo": "deepseek-ai/DeepSeek-V4.1-Flash",
+      "revision": "314113f8a7",
+      "roles": [
+        "E1 task split (third voter)"
+      ],
+      "durable_path": "/shared/dedicated-fsx-data-repo-training-phx-gl-eks-us-west-2/home/jwanyang/visual_effect_data/models/DeepSeek-V4.1-Flash",
+      "local_path": "/tmp/instance_storage/visual_effect_models/models/DeepSeek-V4.1-Flash",
+      "complete": true
+    }
+  }
+}

@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 artifacts/
 .env
+# Copyrighted paper PDFs (kept under visual_effect_data/sources/papers/)
+*.pdf
+# Withdrawn v0.1/v0.2 pre-label traces (CSVs kept); ~13 MB of model reasoning
+motivation/benchmark_audit/prelabel_qwen35_raw.jsonl
+motivation/benchmark_audit/prelabel_qwen35_v02_raw.jsonl
